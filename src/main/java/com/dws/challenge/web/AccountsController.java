@@ -72,9 +72,11 @@ public class AccountsController {
             )
     })
     @GetMapping(path = "/{accountId}")
-    public Account getAccount(@PathVariable String accountId) {
+    public ResponseEntity<Account> getAccount(@PathVariable String accountId) {
         log.info("Fetching account details for account ID: {}", accountId);
-        return accountsService.getAccount(accountId);
+
+        //response error code 400, 500 handled in GlobalExceptionHandler
+        return ResponseEntity.ok(accountsService.getAccount(accountId));
     }
 
     /**
@@ -108,25 +110,20 @@ public class AccountsController {
     @PostMapping(path = "/transfer", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> transferAmount(@RequestBody @Valid TransactionRequest transactionRequest) {
 
-        try {
-            accountsService.transferFunds(
-                    transactionRequest.getSourceAccountID(),
-                    transactionRequest.getDestAccountID(),
-                    transactionRequest.getAmount()
-            );
-        } catch (InsufficientBalanceException exception) {
-            log.error("Transfer failed due to insufficient funds: {}", exception.getMessage());
-            return new ResponseEntity<>(exception.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (InvalidTransactionAmountException exception) {
-            log.error("Transfer failed due to invalid amount: {}", exception.getMessage());
-            return new ResponseEntity<>(exception.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (ResourceLockException exception) {
-            log.error("Transfer failed due to resource lock issues: {}", exception.getMessage());
-            return new ResponseEntity<>(exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        log.info("Initiating transfer of {} from {} to {}",
+                transactionRequest.getAmount(),
+                transactionRequest.getSourceAccountID(),
+                transactionRequest.getDestAccountID());
+
+        accountsService.transferFunds(
+                transactionRequest.getSourceAccountID(),
+                transactionRequest.getDestAccountID(),
+                transactionRequest.getAmount()
+        );
 
         log.info("Transfer of {} completed successfully from account {} to account {}",
                 transactionRequest.getAmount(), transactionRequest.getSourceAccountID(), transactionRequest.getDestAccountID());
+        //response error code 400, 500 handled in GlobalExceptionHandler
         return ResponseEntity.ok().build();
     }
 }

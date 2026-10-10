@@ -69,7 +69,7 @@ public class AccountsServiceTest {
         doNothing().when(notificationService).notifyAboutTransfer(any(), any());
         boolean transferResult = accountsService.transferFunds("1", "2", transferAmount);
         assertTrue(transferResult);
-        verify(notificationService, times(1)).notifyAboutTransfer(any(), any());
+        verify(notificationService, times(2)).notifyAboutTransfer(any(), any());
     }
 
     @Test
@@ -96,6 +96,19 @@ public class AccountsServiceTest {
         });
 
         assertEquals("Amount must be greater than zero.", exception.getMessage());
+
+        assertThrows(InvalidTransactionAmountException.class, () ->
+                accountsService.transferFunds("1", "2", BigDecimal.ZERO)
+        );
+
+        assertThrows(InvalidTransactionAmountException.class, () ->
+                accountsService.transferFunds("1", "2", new BigDecimal("-10.00"))
+        );
+
+        assertThrows(InvalidTransactionAmountException.class, () ->
+                accountsService.transferFunds("1", "2", null)
+        );
+
     }
 
 
@@ -128,6 +141,36 @@ public class AccountsServiceTest {
         assertTrue(accountsService.getAccount(destinationAccount.getAccountId()).getBalance()
                 .equals(new BigDecimal("1000")));
 
+    }
+
+    @Test
+    void testTransferFunds_Success() throws Exception {
+        Account sourceAccount = new Account("1", new BigDecimal("100.00"));
+        Account destinationAccount = new Account("2", new BigDecimal("50.00"));
+        BigDecimal transferAmount = new BigDecimal("30.00");
+
+        when(accountsRepository.getAccount("1")).thenReturn(sourceAccount);
+        when(accountsRepository.getAccount("2")).thenReturn(destinationAccount);
+        doNothing().when(notificationService).notifyAboutTransfer(any(), any());
+
+        boolean transferResult = accountsService.transferFunds("1", "2", transferAmount);
+
+        assertTrue(transferResult);
+        assertEquals(0, sourceAccount.getBalance().compareTo(new BigDecimal("70.00")));
+        assertEquals(0, destinationAccount.getBalance().compareTo(new BigDecimal("80.00")));
+
+        // Verifies both owners receive notifications per requirements
+        verify(notificationService, times(1)).notifyAboutTransfer(eq(sourceAccount), contains("account 2"));
+        verify(notificationService, times(1)).notifyAboutTransfer(eq(destinationAccount), contains("account 1"));
+    }
+
+    @Test
+    void testTransferFunds_ThrowsInvalidAccountException_WhenSameAccount() {
+        InvalidAccountException exception = assertThrows(InvalidAccountException.class, () ->
+                accountsService.transferFunds("1", "1", new BigDecimal("50.00"))
+        );
+
+        assertEquals("Source and destination accounts must be different.", exception.getMessage());
     }
 
 

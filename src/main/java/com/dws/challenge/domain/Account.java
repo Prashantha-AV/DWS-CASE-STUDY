@@ -9,7 +9,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -36,7 +35,7 @@ public class Account {
   public Account(@JsonProperty("accountId") String accountId,
     @JsonProperty("balance") BigDecimal balance) {
     this.accountId = accountId;
-    this.balance = balance != null ? balance : BigDecimal.ZERO;
+    this.balance = balance;
   }
 
   public void lock() {

@@ -1,90 +1,59 @@
 package com.dws.challenge.exception;
 
-import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-@ControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /**
-     * Handle invalid method arguments (MethodArgumentNotValidException) (400 - Bad Request)
-     */
+    /** Handles bean validation constraint failures (@NotNull, @DecimalMin, etc.) as HTTP 400 Bad Request. */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<List<String>> handleMethodArgumentValidationExceptions(MethodArgumentNotValidException ex) {
-        BindingResult bindingResult = ex.getBindingResult();
-        List<String> errorMessages = bindingResult.getAllErrors().stream()
-                .map(ObjectError::getDefaultMessage)
-                .collect(Collectors.toList());
-
-        return new ResponseEntity<>(errorMessages, HttpStatus.BAD_REQUEST);
+    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+                errors.put(error.getField(), error.getDefaultMessage())
+        );
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
-    /**
-     * Handle empty or malformed request body (HttpMessageNotReadableException) (400 - Bad Request)
-     */
+    /** Handles missing, malformed, or unparseable JSON request bodies as HTTP 400 Bad Request (returns plain string). */
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<String> handleEmptyRequestBody(HttpMessageNotReadableException ex) {
+    public ResponseEntity<String> handleMalformedJson(HttpMessageNotReadableException ex) {
         return new ResponseEntity<>("Request body is empty or malformed", HttpStatus.BAD_REQUEST);
     }
 
-    /**
-     * Handle ConstraintViolationException (Validation errors)
-     */
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<Map<String, String>> handleValidationException(ConstraintViolationException ex) {
-        return buildErrorResponse("Validation failed: " + ex.getMessage(), HttpStatus.BAD_REQUEST);
+    /** Handles domain business rule violations (insufficient balance, invalid amounts, duplicate accounts) as HTTP 400 Bad Request (returns plain string). */
+    @ExceptionHandler({
+            InsufficientBalanceException.class,
+            InvalidTransactionAmountException.class,
+            DuplicateAccountIdException.class
+    })
+    public ResponseEntity<String> handleBadRequestExceptions(RuntimeException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
-    /**
-     *  method to build a standard error response.
-     */
-    private ResponseEntity<Map<String, String>> buildErrorResponse(String message, HttpStatus status) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", message);
-        return new ResponseEntity<>(errorResponse, status);
-    }
-
-    /**
-     * Handle InvalidAccountException (400 - Bad Request)
-     */
+    /** Handles invalid or missing account IDs as HTTP 400 Bad Request (returns plain string). */
     @ExceptionHandler(InvalidAccountException.class)
-    public ResponseEntity<Map<String, String>> handleInvalidAccountException(InvalidAccountException ex) {
-        return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    public ResponseEntity<String> handleAccountNotFound(InvalidAccountException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
-    /**
-     * Handle InsufficientFundsException (400 - Bad Request)
-     */
-    @ExceptionHandler(InsufficientBalanceException.class)
-    public ResponseEntity<Map<String, String>> handleInsufficientFundsException(InsufficientBalanceException ex) {
-        return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
-    }
-
-    /**
-     * Handle ResourceLockException (409 - Conflict)
-     */
+    /** Handles resource and concurrency locking conflicts as HTTP 409 Conflict. */
     @ExceptionHandler(ResourceLockException.class)
-    public ResponseEntity<Map<String, String>> handleLockException(ResourceLockException ex) {
-        return buildErrorResponse("Resource conflict: " + ex.getMessage(), HttpStatus.CONFLICT);
+    public ResponseEntity<String> handleLockException(ResourceLockException ex) {
+        return new ResponseEntity<>("Resource conflict: " + ex.getMessage(), HttpStatus.CONFLICT);
     }
 
-    /**
-     * Handle other exceptions (500 - Internal Server Error)
-     */
+    /** Catch-all fallback handler for unexpected runtime exceptions and internal system errors returning HTTP 500. */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>> handleException(Exception ex) {
-        return buildErrorResponse("Unexpected error: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<String> handleGeneralException(Exception ex) {
+        return new ResponseEntity<>("Internal server error: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

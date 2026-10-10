@@ -158,4 +158,17 @@ public class AccountsControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Insufficient funds: attempted to withdraw 2000, but balance is 1500.00"));
     }
+
+    @Test
+    public void transferAmountToSameAccount_BadRequestTest() throws Exception {
+        String accountId = "Account-7777";
+        this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"accountId\":\"" + accountId + "\",\"balance\":1000}"))
+                .andExpect(status().isCreated());
+
+        this.mockMvc.perform(post("/v1/accounts/transfer").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"sourceAccountID\":\"" + accountId + "\",\"destAccountID\":\"" + accountId + "\",\"amount\":100}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Source and destination accounts must be different."));
+    }
 }
