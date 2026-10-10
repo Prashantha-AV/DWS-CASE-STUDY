@@ -1,3 +1,5 @@
+> **Reviewers Note:** Detailed architectural decisions, concurrency implementation details, verification matrices, and production-readiness proposals can be found in [CHANGES.md](CHANGES.md).
+
 The goal of this project is to build a high-performance API capable of handling concurrent bank account transfers efficiently, utilizing Java 17 and Spring Boot 3.4.0. The application aims to provide efficient, scalable, and secure services for managing bank accounts and processing transfers. The following enhancements and features are considered for the development and future improvement of the application:
 
 **1. API Documentation with Swagger:**
@@ -64,66 +66,3 @@ The goal of this project is to build a high-performance API capable of handling 
 
 **14. Metrics Collection for Transaction Performance:**
   Utilize Dropwizard or Prometheus to collect detailed metrics for tracking transactions, including execution times, success rates, and error counts. These metrics can be used to monitor the system’s performance   and identify potential bottlenecks or issues.
-
-
-
----
-
-## Changes Implemented in This Solution
-
-* **Deterministic Deadlock Prevention**: Replaced spin-lock loops and ad-hoc retries with strict natural ordering (`accountId.compareTo(...)`), eliminating circular wait conditions and guaranteeing deadlock-free concurrent execution.
-* **Encapsulated Account Concurrency**: Embedded thread synchronization within the `Account` domain model via `ReentrantLock`, ensuring state integrity during simultaneous debits and credits.
-* **Dual-Party Transfer Notifications**: Dispatched transactional notifications to **both** the debiting and crediting account holders through `NotificationService`, fulfilling the requirement while mocking the collaborator in automated tests.
-* **Defensive Domain Validation**: Enforced strict rules preventing negative transfer amounts, zero balances, overdraft conditions, nonexistent account lookups, and self-transfers.
-* **Fixed Deserialization Constraints**: Corrected the Jackson constructor binding in `Account.java` so that omitted balances remain `null` and reliably trigger Spring's `@NotNull` Bean Validation.
-* **Centralized Error Handling**: Standardized API error responses across the board using `@RestControllerAdvice` in `GlobalExceptionHandler`, cleanly mapping domain violations to `400 Bad Request` without polluting controller actions.
-* **Comprehensive Test Coverage**:
-    * **Unit Tests (`AccountsServiceTest`)**: Verified isolation logic, boundary constraints, and dual notification invocations using Mockito.
-    * **Integration Tests (`AccountsControllerTest`)**: Validated HTTP status contracts (`200`, `201`, `400`) and JSON serialization using `MockMvc`.
-    * **Concurrency Stress Tests (`AccountsServiceConcurrentTest`)**: Simulated bidirectional multi-threaded contention to verify thread safety and ledger balance conservation.
-
----
-
-## Future Scope & Enterprise Production Readiness
-
-For this assignment, everything runs in memory on one server, so my main focus was making sure concurrent transfers never deadlock, corrupt data, or allow invalid transactions.
-
-Moving this to a real production environment with live financial transactions would require a few key upgrades:
-
-### 1. Asynchronous Messaging & Microservices Decoupling
-* **Event-Driven Notification Microservice**: Extract `NotificationService` into an autonomous downstream microservice, completely decoupling it from core ledger logic.
-* **Transactional Outbox via Kafka / RabbitMQ / AMPS**: Persist transfer events into an immutable transactional outbox table during balance updates, streaming events asynchronously to Apache Kafka, RabbitMQ, or AMPS brokers to prevent third-party notification latency or network drops from holding transactions open.
-* **Declarative & Non-Blocking Service Intercommunication**:
-    * **Declarative Sync Client (Spring Cloud OpenFeign)**: Replace traditional `RestTemplate` with OpenFeign interfaces incorporating client-side load balancing (Spring Cloud LoadBalancer), circuit breakers, rate limiters, and fallback handlers via **Resilience4j**.
-    * **Reactive Non-Blocking Client (Spring WebFlux / WebClient over Netty)**: Transition to an event-loop-driven, non-blocking reactive stack (`WebClient` backed by Netty) for ultra-high throughput I/O operations, ensuring high-concurrency external communication without thread starvation or request-thread blocking.
-### 2. Stateless Core, Data Persistence & Dynamic Horizontal Scaling
-* **Stateless Application Architecture**: Offload all transient state, session context, and account balances from JVM memory to an external persistent store to allow seamless multi-pod horizontal scaling without session affinity constraints.
-* **Spring Data JPA & Pragmatic REST APIs**: Expose standardized CRUD operations for account entities using standard Spring Data JPA repositories and dedicated `@RestController` endpoints with clean DTO mappings.
-* **Distributed Concurrency & Locking Across Clusters**:
-    * **Pessimistic Locking (Recommended for High Contention)**: Use database row-level locks (`SELECT ... FOR UPDATE` acquired in natural account ID order) within a single ACID transaction to guarantee immediate serializability and eliminate deadlocks across pods.
-    * **Optimistic Locking (Low Contention Alternative)**: Use versioning (`@Version`) with exponential backoff retries. While lightweight, it can trigger frequent retry storms and rollback overhead under high concurrency.
-    * **Distributed Transactions via Saga Pattern**: For distributed microservices spanning separate databases, avoid blocking two-phase commit (2PC) protocols in favor of an **Orchestrated Saga Pattern** (or Choreography) with compensating transactions to ensure eventual consistency across decoupled ledger services.
-* **Dynamic Scaling & Service Discovery**: Register containerized services with **Spring Cloud Gateway** or **Eureka** for automated service registry and dynamic health-driven traffic routing, eliminating static host configurations under Kubernetes Horizontal Pod Autoscaler (HPA).
-
-### 3. API Gateway, Edge Routing & Enterprise Security
-* **API Gateway Pattern**: Route incoming traffic through an enterprise API Gateway (e.g., Spring Cloud Gateway) to centralize protocol translation, CORS policies, rate limiting (Token Bucket via Redis), and path-based routing.
-* **OAuth2 / OIDC Authentication**: Protect financial endpoints with Spring Security configured as an OAuth2 / JWT resource server, verifying cryptographically signed tokens against identity providers (OAuth2, Okta, Azure AD).
-* **Role-Based Access Control (RBAC)**: Enforce granular scope authorization (`SCOPE_transfers:write`) to verify that the authenticated caller owns the debit account before executing transfers.
-* **Transfer Idempotency (Dual-Layer Protection)**:
-    * **Distributed Cache Layer (Redis SETNX)**: Enforce an `Idempotency-Key` HTTP header cached in Redis with short lease TTLs to quickly intercept duplicate network retries and serve cached responses without hitting core databases.
-    * **Database Persistence Layer (ACID Unique Constraint)**: Store the processed idempotency key and response payload within an immutable database table using a `UNIQUE` constraint, providing absolute ledger protection against duplicate debits even during Redis node failovers.
-
-### 4. Comprehensive Observability, Metrics & Centralized Logging
-* **Spring Boot Actuator Health & Custom Indicators**: Expand Actuator endpoints (`/actuator/health`, `/actuator/metrics`) with custom indicators monitoring database connection pool saturation, cache hit ratios, and message broker connectivity.
-* **Transaction Performance Metrics**: Instrument transfers with OTEL / Micrometer / Prometheus counters and timers to record p95/p99 transaction execution latencies, transfer throughput, lock-wait durations, and failure distributions.
-* **Centralized Logging (Splunk / ELK) & Distributed Tracing**:
-    * Format application logs using JSON layout (`LogstashLogbackEncoder`) and forward them to **Splunk** for centralized log parsing, compliance auditing, and security anomaly detection.
-    * Inject OpenTelemetry correlation IDs (`traceId` / `spanId`) via Gateway headers and MDC context, propagating trace headers through REST calls and Kafka topics for distributed tracing.
-
-### 5. API Documentation, Developer Experience & Externalized Configuration
-* **Customized Swagger / OpenAPI Documentation**: Enhance OpenAPI 3 metadata (`/swagger-ui.html`, `/api-docs`) with complete domain models, business error code catalogues, schema validations, and realistic payload examples for consumer self-service.
-
-### 6. Automated DevOps, Containerization & CI/CD Pipelines
-* **Containerization**: Build minimal, secure container images using multi-stage Docker builds.
-* **Automated CI/CD Workflows**: Establish Jenkins or GitHub Actions pipelines running static code analysis (SonarQube), dependency vulnerability scanning (RAVEN / Trivy), automated unit and concurrency test execution, and zero-downtime deployment to Kubernetes/OpenShift.
-* **Audit Trail & Double-Entry Ledger**: Implement an append-only journal (`transfer_audit_log`) capturing transaction IDs, balance snapshots before/after execution, operator metadata, and timestamps to satisfy regulatory and financial audit requirements.
