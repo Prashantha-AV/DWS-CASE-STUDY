@@ -1,0 +1,123 @@
+ [           main] com.dws.challenge.ChallengeApplication   : Starting ChallengeApplication using Java 17.0.12 with PID 25259 (/Users/prashanthaaramanekoppa/Documents/Ashutosh_Challenge_Test/DBChallenge-main/build/classes/java/main started by prashanthaaramanekoppa in /Users/prashanthaaramanekoppa/Documents/Ashutosh_Challenge_Test/DBChallenge-main)
+ [           main] com.dws.challenge.ChallengeApplication   : No active profile set, falling back to 1 default profile: "default"
+ [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+ [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+ [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.39]
+ [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+ [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 612 ms
+ [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 5 endpoints beneath base path '/actuator'
+ [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+ [           main] com.dws.challenge.ChallengeApplication   : Started ChallengeApplication in 1.217 seconds (process running for 1.461)
+ [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+ [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+ [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 10 ms
+ [nio-8080-exec-9] o.springdoc.api.AbstractOpenApiResource  : Init duration for springdoc-openapi is: 109 ms
+ [io-8080-exec-10] c.dws.challenge.web.AccountsController   : Fetching account details for account ID: ACC-A
+ [nio-8080-exec-6] c.dws.challenge.web.AccountsController   : Creating account Account(lock=java.util.concurrent.locks.ReentrantLock@64c7a1d0[Unlocked], accountId=ACC-01, balance=1000.00)
+ [nio-8080-exec-8] c.dws.challenge.web.AccountsController   : Fetching account details for account ID: ACC-01
+ [nio-8080-exec-9] c.dws.challenge.web.AccountsController   : Creating account Account(lock=java.util.concurrent.locks.ReentrantLock@36c685c[Unlocked], accountId=ACC-02, balance=1000.00)
+ [io-8080-exec-10] c.dws.challenge.web.AccountsController   : Fetching account details for account ID: ACC-01
+ [nio-8080-exec-2] c.dws.challenge.web.AccountsController   : Creating account Account(lock=java.util.concurrent.locks.ReentrantLock@78fc8313[Unlocked], accountId=ACC-02, balance=1000.00)
+ [nio-8080-exec-5] c.dws.challenge.web.AccountsController   : Initiating transfer of 50000.00 from ACC-01 to ACC-02
+ [nio-8080-exec-4] c.dws.challenge.web.AccountsController   : Initiating transfer of 1000.00 from ACC-01 to ACC-02
+ [         task-1] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Transferred 1000.00 to account ACC-02
+ [nio-8080-exec-4] c.dws.challenge.web.AccountsController   : Transfer of 1000.00 completed successfully from account ACC-01 to account ACC-02
+ [         task-2] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Received 1000.00 from account ACC-01
+ [nio-8080-exec-1] c.dws.challenge.web.AccountsController   : Fetching account details for account ID: ACC-01
+ [nio-8080-exec-7] c.dws.challenge.web.AccountsController   : Fetching account details for account ID: ACC-02
+ [nio-8080-exec-6] c.dws.challenge.web.AccountsController   : Initiating transfer of 500.00 from ACC-02 to ACC-01
+ [         task-4] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Received 500.00 from account ACC-02
+ [nio-8080-exec-6] c.dws.challenge.web.AccountsController   : Transfer of 500.00 completed successfully from account ACC-02 to account ACC-01
+ [         task-3] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Transferred 500.00 to account ACC-01
+ [nio-8080-exec-3] c.dws.challenge.web.AccountsController   : Fetching account details for account ID: ACC-02
+ [nio-8080-exec-8] c.dws.challenge.web.AccountsController   : Fetching account details for account ID: ACC-01
+ [nio-8080-exec-2] c.dws.challenge.web.AccountsController   : Initiating transfer of 1.5 from ACC-01 to ACC-02
+ [nio-8080-exec-2] c.dws.challenge.web.AccountsController   : Transfer of 1.5 completed successfully from account ACC-01 to account ACC-02
+ [         task-5] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Transferred 1.5 to account ACC-02
+ [         task-6] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Received 1.5 from account ACC-01
+ [nio-8080-exec-5] c.dws.challenge.web.AccountsController   : Fetching account details for account ID: ACC-01
+ [nio-8080-exec-1] c.dws.challenge.web.AccountsController   : Initiating transfer of 10.00 from NON-EXISTENT to ACC-02
+ [nio-8080-exec-1] c.dws.challenge.service.AccountsService  : Account with id NON-EXISTENT not found
+ =============================================
+ Deadlock validation
+ =============================================
+ [nio-8080-exec-5] c.dws.challenge.web.AccountsController   : Initiating transfer of 10 from ACC-01 to ACC-02
+ [nio-8080-exec-4] c.dws.challenge.web.AccountsController   : Initiating transfer of 10 from ACC-02 to ACC-01
+ [io-8080-exec-10] c.dws.challenge.web.AccountsController   : Initiating transfer of 10 from ACC-01 to ACC-02
+ [nio-8080-exec-2] c.dws.challenge.web.AccountsController   : Initiating transfer of 10 from ACC-02 to ACC-01
+ [nio-8080-exec-9] c.dws.challenge.web.AccountsController   : Initiating transfer of 10 from ACC-01 to ACC-02
+ [nio-8080-exec-8] c.dws.challenge.web.AccountsController   : Initiating transfer of 10 from ACC-02 to ACC-01
+ [         task-7] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Transferred 10 to account ACC-02
+ [         task-9] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Transferred 10 to account ACC-01
+ [         task-8] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Transferred 10 to account ACC-02
+ [         task-7] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Received 10 from account ACC-01
+ [io-8080-exec-10] c.dws.challenge.web.AccountsController   : Transfer of 10 completed successfully from account ACC-01 to account ACC-02
+ [nio-8080-exec-2] c.dws.challenge.web.AccountsController   : Transfer of 10 completed successfully from account ACC-02 to account ACC-01
+ [         task-9] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Received 10 from account ACC-02
+ [nio-8080-exec-9] c.dws.challenge.web.AccountsController   : Transfer of 10 completed successfully from account ACC-01 to account ACC-02
+ [         task-8] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Received 10 from account ACC-01
+ [        task-10] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Transferred 10 to account ACC-01
+ [        task-11] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Transferred 10 to account ACC-02
+ [nio-8080-exec-8] c.dws.challenge.web.AccountsController   : Transfer of 10 completed successfully from account ACC-02 to account ACC-01
+ [         task-7] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Received 10 from account ACC-02
+ [nio-8080-exec-5] c.dws.challenge.web.AccountsController   : Transfer of 10 completed successfully from account ACC-01 to account ACC-02
+ [        task-13] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Received 10 from account ACC-01
+ [        task-14] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Received 10 from account ACC-02
+ [nio-8080-exec-4] c.dws.challenge.web.AccountsController   : Transfer of 10 completed successfully from account ACC-02 to account ACC-01
+ [        task-12] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Transferred 10 to account ACC-01
+ [nio-8080-exec-3] c.dws.challenge.web.AccountsController   : Initiating transfer of 10 from ACC-01 to ACC-02
+ [nio-8080-exec-7] c.dws.challenge.web.AccountsController   : Initiating transfer of 10 from ACC-02 to ACC-01
+ [nio-8080-exec-2] c.dws.challenge.web.AccountsController   : Initiating transfer of 10 from ACC-02 to ACC-01
+ [nio-8080-exec-7] c.dws.challenge.web.AccountsController   : Transfer of 10 completed successfully from account ACC-02 to account ACC-01
+ [nio-8080-exec-4] c.dws.challenge.web.AccountsController   : Initiating transfer of 10 from ACC-02 to ACC-01
+ [nio-8080-exec-3] c.dws.challenge.web.AccountsController   : Transfer of 10 completed successfully from account ACC-01 to account ACC-02
+ [         task-9] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Transferred 10 to account ACC-02
+ [         task-9] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Transferred 10 to account ACC-01
+ [nio-8080-exec-2] c.dws.challenge.web.AccountsController   : Transfer of 10 completed successfully from account ACC-02 to account ACC-01
+ [nio-8080-exec-4] c.dws.challenge.web.AccountsController   : Transfer of 10 completed successfully from account ACC-02 to account ACC-01
+ [         task-8] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Received 10 from account ACC-01
+ [         task-8] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Transferred 10 to account ACC-01
+ [         task-8] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Received 10 from account ACC-02
+ [         task-8] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Transferred 10 to account ACC-01
+ [         task-8] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Received 10 from account ACC-02
+ [nio-8080-exec-1] c.dws.challenge.web.AccountsController   : Initiating transfer of 10 from ACC-01 to ACC-02
+ [nio-8080-exec-1] c.dws.challenge.web.AccountsController   : Transfer of 10 completed successfully from account ACC-01 to account ACC-02
+ [nio-8080-exec-6] c.dws.challenge.web.AccountsController   : Initiating transfer of 10 from ACC-01 to ACC-02
+ [nio-8080-exec-6] c.dws.challenge.web.AccountsController   : Transfer of 10 completed successfully from account ACC-01 to account ACC-02
+ [         task-9] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Received 10 from account ACC-02
+ [        task-10] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Transferred 10 to account ACC-02
+ [         task-9] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Received 10 from account ACC-01
+ [        task-11] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Transferred 10 to account ACC-02
+ [        task-10] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Received 10 from account ACC-01
+ [nio-8080-exec-9] c.dws.challenge.web.AccountsController   : Initiating transfer of 10 from ACC-02 to ACC-01
+ [nio-8080-exec-6] c.dws.challenge.web.AccountsController   : Initiating transfer of 10 from ACC-01 to ACC-02
+ [nio-8080-exec-8] c.dws.challenge.web.AccountsController   : Initiating transfer of 10 from ACC-01 to ACC-02
+ [nio-8080-exec-5] c.dws.challenge.web.AccountsController   : Initiating transfer of 10 from ACC-02 to ACC-01
+ [nio-8080-exec-7] c.dws.challenge.web.AccountsController   : Initiating transfer of 10 from ACC-01 to ACC-02
+ [nio-8080-exec-9] c.dws.challenge.web.AccountsController   : Transfer of 10 completed successfully from account ACC-02 to account ACC-01
+ [nio-8080-exec-8] c.dws.challenge.web.AccountsController   : Transfer of 10 completed successfully from account ACC-01 to account ACC-02
+ [nio-8080-exec-2] c.dws.challenge.web.AccountsController   : Initiating transfer of 10 from ACC-02 to ACC-01
+ [nio-8080-exec-6] c.dws.challenge.web.AccountsController   : Transfer of 10 completed successfully from account ACC-01 to account ACC-02
+ [         task-9] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Transferred 10 to account ACC-01
+ [nio-8080-exec-7] c.dws.challenge.web.AccountsController   : Transfer of 10 completed successfully from account ACC-01 to account ACC-02
+ [         task-9] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Received 10 from account ACC-02
+ [nio-8080-exec-2] c.dws.challenge.web.AccountsController   : Transfer of 10 completed successfully from account ACC-02 to account ACC-01
+ [         task-9] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Transferred 10 to account ACC-02
+ [         task-9] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Received 10 from account ACC-01
+ [         task-9] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Transferred 10 to account ACC-02
+ [         task-9] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Received 10 from account ACC-01
+ [         task-9] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Transferred 10 to account ACC-01
+ [         task-9] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Received 10 from account ACC-02
+ [         task-9] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Transferred 10 to account ACC-02
+ [nio-8080-exec-5] c.dws.challenge.web.AccountsController   : Transfer of 10 completed successfully from account ACC-02 to account ACC-01
+ [         task-9] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Received 10 from account ACC-01
+ [         task-9] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Transferred 10 to account ACC-01
+ [         task-7] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Received 10 from account ACC-02
+ [nio-8080-exec-3] c.dws.challenge.web.AccountsController   : Initiating transfer of 10 from ACC-02 to ACC-01
+ [nio-8080-exec-4] c.dws.challenge.web.AccountsController   : Initiating transfer of 10 from ACC-01 to ACC-02
+ [nio-8080-exec-3] c.dws.challenge.web.AccountsController   : Transfer of 10 completed successfully from account ACC-02 to account ACC-01
+ [nio-8080-exec-4] c.dws.challenge.web.AccountsController   : Transfer of 10 completed successfully from account ACC-01 to account ACC-02
+ [         task-9] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Transferred 10 to account ACC-02
+ [         task-7] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Transferred 10 to account ACC-01
+ [        task-11] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-01: Received 10 from account ACC-02
+ [         task-9] c.d.c.service.EmailNotificationService   : Sending notification to owner of ACC-02: Received 10 from account ACC-01
