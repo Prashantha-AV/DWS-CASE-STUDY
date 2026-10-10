@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -20,7 +20,7 @@ public class Account {
   private final Lock lock = new ReentrantLock();
 
   @NotNull
-  @NotEmpty
+  @NotBlank
   private final String accountId;
 
   @NotNull
@@ -36,21 +36,11 @@ public class Account {
   public Account(@JsonProperty("accountId") String accountId,
     @JsonProperty("balance") BigDecimal balance) {
     this.accountId = accountId;
-    this.balance = balance;
+    this.balance = balance != null ? balance : BigDecimal.ZERO;
   }
 
   public void lock() {
     lock.lock();
-  }
-
-  public boolean tryResourceLock(long time, TimeUnit unit, int maxRetries) throws InterruptedException {
-    for (int i = 0; i < maxRetries; i++) {
-      if (lock.tryLock(time, unit)) {
-        return true;
-      }
-      Thread.sleep(100);
-    }
-    return false;
   }
 
   public void unlock() {

@@ -12,12 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.concurrent.TimeUnit;
-
-import static com.dws.challenge.utils.ApplicationConstants.MAX_RETRY_ATTEMPTS;
-import static com.dws.challenge.utils.ApplicationConstants.RETRY_DELAY_MS;
 import static com.dws.challenge.utils.TransactionLogging.logTransferDetails;
 
 @Service
@@ -74,6 +68,10 @@ public class AccountsService {
 
     validateTransferAmount(amountToTransfer);
 
+    if (sourceAccountId.equals(destinationAccountId)) {
+        throw new InvalidAccountException("Source and destination accounts must be different.");
+    }
+
     Account sourceAccount = retrieveAccountOrThrow(sourceAccountId);
     Account destinationAccount = retrieveAccountOrThrow(destinationAccountId);
 
@@ -87,12 +85,11 @@ public class AccountsService {
     return transferSuccess;
   }
 
-
   /**
    * Processes a transfer transaction between two accounts.
    * This method validates the transfer amount, locks both accounts to prevent concurrency issues,
    * performs the transaction (withdrawal from source account and deposit to destination account),
-   * and handles resource locking with retries.
+   * and handles resource locking in strict natural order to eliminate deadlocks.
    *
    * @param sourceAccount The account from which funds are withdrawn
    * @param destinationAccount The account to which funds are deposited
@@ -100,18 +97,17 @@ public class AccountsService {
    * @return true if the transaction is successfully completed
    * @throws InsufficientBalanceException If the source account has insufficient balance
    * @throws InvalidTransactionAmountException If the transfer amount is invalid (zero or negative)
-   * @throws ResourceLockException If the resource locks cannot be acquired within the retry limits
+   * @throws ResourceLockException If the resource locks cannot be acquired or thread is interrupted
    */
   public boolean processTransaction(final Account sourceAccount, final Account destinationAccount, final BigDecimal transferAmount)
           throws InsufficientBalanceException, InvalidTransactionAmountException, ResourceLockException {
 
     validateTransferAmount(transferAmount);
 
-    Account[] accountsToLock = {sourceAccount, destinationAccount};
-    Arrays.sort(accountsToLock, Comparator.comparing(Account::getAccountId));
-
-    Account firstLock = accountsToLock[0];
-    Account secondLock = accountsToLock[1];
+    // Natural ordering without array allocation or sort overhead
+    boolean isSourceFirst = sourceAccount.getAccountId().compareTo(destinationAccount.getAccountId()) < 0;
+    Account firstLock = isSourceFirst ? sourceAccount : destinationAccount;
+    Account secondLock = isSourceFirst ? destinationAccount : sourceAccount;
 
     boolean firstLockAcquired = false;
     boolean secondLockAcquired = false;
@@ -123,13 +119,14 @@ public class AccountsService {
       if (firstLockAcquired && secondLockAcquired) {
         performTransaction(sourceAccount, destinationAccount, transferAmount);
       } else {
-        throw new ResourceLockException("Failed to acquire locks on both accounts after " + MAX_RETRY_ATTEMPTS + " attempts.");
+        throw new ResourceLockException("Failed to acquire locks on both accounts.");
       }
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw new ResourceLockException("Thread interrupted while acquiring locks.");
     } finally {
-      releaseLockIfHeld(firstLock, firstLockAcquired);
       releaseLockIfHeld(secondLock, secondLockAcquired);
+      releaseLockIfHeld(firstLock, firstLockAcquired);
     }
 
     return true;
@@ -142,20 +139,22 @@ public class AccountsService {
    * @throws InvalidTransactionAmountException If the amount is zero or negative
    */
   private void validateTransferAmount(BigDecimal amount) throws InvalidTransactionAmountException {
-    if (amount.signum() <= 0) {
+    if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
       throw new InvalidTransactionAmountException("Amount must be greater than zero.");
     }
   }
 
   /**
-   * Attempts to lock the given account with retries.
+   * Attempts to lock the given account.
+   * Uses standard blocking acquisition, guaranteed deadlock-free via global ID ordering.
    *
    * @param account The account to lock
-   * @return true if the account was successfully locked, false otherwise
-   * @throws InterruptedException If the thread is interrupted while trying to lock the account
+   * @return true if the account was successfully locked
+   * @throws InterruptedException If the thread is interrupted while acquiring the lock
    */
   private boolean attemptToLockAccount(Account account) throws InterruptedException {
-    return account.tryResourceLock(RETRY_DELAY_MS, TimeUnit.MILLISECONDS, MAX_RETRY_ATTEMPTS);
+    account.lock();
+    return true;
   }
 
   /**
@@ -240,9 +239,22 @@ public class AccountsService {
    * @param transferAmount The amount transferred
    */
   private void notifyTransferCompletion(Account sourceAccount, Account destinationAccount, BigDecimal transferAmount) {
-    String message = String.format("Successfully transferred %d from account %s to account %s",
-            transferAmount.intValue(), sourceAccount.getAccountId(), destinationAccount.getAccountId());
-    notificationService.notifyAboutTransfer(sourceAccount, message);
+      String sourceMessage = String.format("Transferred %s to account %s",
+              transferAmount.toPlainString(), destinationAccount.getAccountId());
+      String destinationMessage = String.format("Received %s from account %s",
+              transferAmount.toPlainString(), sourceAccount.getAccountId());
+
+      try {
+          notificationService.notifyAboutTransfer(sourceAccount, sourceMessage);
+      } catch (Exception e) {
+          log.error("Failed to notify source account {}: {}", sourceAccount.getAccountId(), e.getMessage());
+      }
+
+      try {
+          notificationService.notifyAboutTransfer(destinationAccount, destinationMessage);
+      } catch (Exception e) {
+          log.error("Failed to notify destination account {}: {}", destinationAccount.getAccountId(), e.getMessage());
+      }
   }
 
 }
