@@ -2,7 +2,7 @@ package com.dws.challenge.dto;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -26,7 +26,7 @@ public class TransactionRequest implements Serializable {
     private final String destAccountID;
 
     @NotNull(message = "Amount cannot be null.")
-    @Min(value = 0, message = "Amount must be positive.")
+    @DecimalMin(value = "0.01", message = "Amount must be greater than zero.")
     private final BigDecimal amount;
 
     @JsonCreator
