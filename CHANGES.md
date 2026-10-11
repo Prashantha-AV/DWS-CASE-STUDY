@@ -16,6 +16,8 @@ A high-performance, thread-safe financial transfer REST API built using **Java 1
     * **Unit Tests (`AccountsServiceTest`)**: Validates business boundary constraints, domain exceptions, and dual notification delivery via Mockito.
     * **Integration Tests (`AccountsControllerTest`)**: Verifies HTTP contract status codes (`200`, `201`, `400`) and request/response JSON serialization using `MockMvc`.
     * **Concurrency Stress Tests (`AccountsServiceConcurrentTest`)**: Simulates simultaneous bidirectional transfer contention across thread pools to verify strict ledger balance conservation and absence of deadlocks.
+    * **Notification Validation & Edge Case Tests (`AccountsServiceNotificationTest`)**: Verifies that failed transfers (non-positive amounts, `null` inputs, self-transfers, missing accounts, and insufficient balance overdrafts) fail fast and cleanly dispatch **zero** spurious notifications.
+    * **Concurrent Notification Contention Tests (`AccountsServiceNotificationConcurrentTest`)**: Evaluates multi-threaded transfer loads to guarantee that exactly two notifications are dispatched per successful transaction (one to the sender and one to the receiver), verifying correct counterparty message payloads without drop-offs or race condition leakage.
 
 ---
 
