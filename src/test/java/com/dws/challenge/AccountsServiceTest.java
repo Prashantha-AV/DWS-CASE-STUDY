@@ -15,8 +15,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class AccountsServiceTest {
@@ -126,7 +134,7 @@ public class AccountsServiceTest {
     }
 
     @Test
-    public void testTransferAmountFromAcc1ToAcc2_thenCheckCorrectDebitAndCredit()  {
+    public void testTransferAmountFromAcc1ToAcc2_thenCheckCorrectDebitAndCredit() {
 
         Account sourceAccount = new Account("001", BigDecimal.valueOf(2000));
         Account destinationAccount = new Account("002", BigDecimal.valueOf(500));
