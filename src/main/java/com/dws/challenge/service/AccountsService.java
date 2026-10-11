@@ -44,7 +44,11 @@ public class AccountsService {
    * @return The account associated with the given accountId
    */
   public Account getAccount(String accountId) {
-    return this.accountsRepository.getAccount(accountId);
+      Account account = this.accountsRepository.getAccount(accountId);
+      if (account == null) {
+          throw new InvalidAccountException("Account not found for id: " + accountId);
+      }
+      return account;
   }
 
   /**

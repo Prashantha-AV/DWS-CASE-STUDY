@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.dws.challenge.domain.Account;
@@ -104,7 +105,7 @@ public class AccountsControllerTest {
     public void transferAmountWithNoBody_BadRequestTest() throws Exception {
         this.mockMvc.perform(post("/v1/accounts/transfer").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Request body is empty or malformed"));
+                .andExpect(jsonPath("$.message").value("Request body is empty or malformed"));
     }
 
     @Test
@@ -155,7 +156,7 @@ public class AccountsControllerTest {
         this.mockMvc.perform(post("/v1/accounts/transfer").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"sourceAccountID\":\"" + fromAccountId + "\",\"destAccountID\":\"" + toAccountId + "\",\"amount\":2000}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Insufficient funds: attempted to withdraw 2000, but balance is 1500.00"));
+                .andExpect(jsonPath("$.message").value("Insufficient funds: attempted to withdraw 2000, but balance is 1500.00"));
     }
 
     @Test
@@ -168,6 +169,6 @@ public class AccountsControllerTest {
         this.mockMvc.perform(post("/v1/accounts/transfer").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"sourceAccountID\":\"" + accountId + "\",\"destAccountID\":\"" + accountId + "\",\"amount\":100}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Source and destination accounts must be different."));
+                .andExpect(jsonPath("$.message").value("Source and destination accounts must be different."));
     }
 }

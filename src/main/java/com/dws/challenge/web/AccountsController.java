@@ -2,7 +2,7 @@ package com.dws.challenge.web;
 
 import com.dws.challenge.domain.Account;
 import com.dws.challenge.dto.TransactionRequest;
-import com.dws.challenge.exception.*;
+import com.dws.challenge.exception.DuplicateAccountIdException;
 import com.dws.challenge.service.AccountsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -15,7 +15,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 
 @RestController
@@ -52,7 +57,7 @@ public class AccountsController {
     @Operation(
             summary = "Retrieve account details by account ID",
             description = "This endpoint retrieves the details of an account based on the provided account ID.",
-            tags = {"Account" }
+            tags = {"Account"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -75,8 +80,8 @@ public class AccountsController {
     public ResponseEntity<Account> getAccount(@PathVariable String accountId) {
         log.info("Fetching account details for account ID: {}", accountId);
 
-        //response error code 400, 500 handled in GlobalExceptionHandler
-        return ResponseEntity.ok(accountsService.getAccount(accountId));
+        Account account = this.accountsService.getAccount(accountId);
+        return ResponseEntity.ok(account);
     }
 
     /**
